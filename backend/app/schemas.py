@@ -1,1 +1,78 @@
 
+from pydantic import BaseModel
+from typing import Optional
+from enum import Enum
+
+class BookCondition(str, Enum):
+    OK = "OK"
+    USED = "USED"
+    WORN = "WORN"
+
+class CopyStatus(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    REQUESTED = "REQUESTED"
+    BORROWED = "BORROWED"
+
+class RequestStatus(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    DELIVERED = "DELIVERED"
+    COMPLETED = "COMPLETED"
+
+class UserBase(BaseModel):
+    name: str
+    email: str
+    city: str
+
+class UserCreate(UserBase):
+    pass
+
+class User(UserBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+class BookBase(BaseModel):
+    title: str
+    author: str
+    isbn: str
+    cover_url: Optional[str] = None
+
+class BookCreate(BookBase):
+    pass
+
+class Book(BookBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+class CopyBase(BaseModel):
+    condition: CopyStatus
+    status: CopyStatus
+    location: str
+
+class CopyCreate(CopyBase):
+    book_id: int
+    owner_id: int
+
+class Copy(CopyBase):
+    id: int
+    book: Book
+    owner: User
+    class Config:
+        orm_mode = True
+
+class RequestBase(BaseModel):
+    message: Optional[str] = None
+    status: RequestStatus
+
+class RequestCreate(RequestBase):
+    copy_id: int
+    requester_id: int
+
+class Request(RequestBase):
+    id: int
+    copy: Copy
+    requester: User
+    class Config:
+        orm_mode = True
