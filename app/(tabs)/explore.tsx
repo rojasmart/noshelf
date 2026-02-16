@@ -1,112 +1,137 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
+import { StyleSheet, TouchableOpacity } from "react-native";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import ParallaxScrollView from "@/components/parallax-scroll-view";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import api from "@/hooks/use-api";
+import { useUser } from "@/hooks/use-user";
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const response = await api.get("/books");
+      setBooks(response.data);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestBook = async (bookId: number, title: string) => {
+    if (!user) {
+      alert("Please register first to request books!");
+      return;
+    }
+
+    try {
+      await api.post("/requests", {
+        book_id: bookId,
+        requester_id: user.id,
+        message: `I would like to borrow "${title}"`,
+      });
+      alert("Book request sent successfully!");
+    } catch (error) {
+      console.error("Error requesting book:", error);
+      alert("Failed to send request. Please try again.");
+    }
+  };
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
+      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      headerImage={<Image source={require("@/assets/images/noshelf-book.jpg")} style={styles.reactLogo} />}
+    >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
+        <ThemedText type="title">Explore Books</ThemedText>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
+
+      {!user && (
+        <ThemedView style={styles.stepContainer}>
+          <ThemedText>Please register first to request books!</ThemedText>
+        </ThemedView>
+      )}
+
+      {loading ? (
+        <ThemedView style={styles.stepContainer}>
+          <ThemedText>Loading books...</ThemedText>
+        </ThemedView>
+      ) : books.length > 0 ? (
+        books.map((book: any) => (
+          <ThemedView key={book.id} style={styles.stepContainer}>
+            <ThemedText type="subtitle">{book.title}</ThemedText>
+            <ThemedText>by {book.author}</ThemedText>
+            <ThemedText>ISBN: {book.isbn}</ThemedText>
+            {user && (
+              <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
+                <ThemedText style={styles.buttonText}>Request Book</ThemedText>
+              </TouchableOpacity>
+            )}
+          </ThemedView>
+        ))
+      ) : (
+        <ThemedView style={styles.stepContainer}>
+          <ThemedText>No books available yet</ThemedText>
+        </ThemedView>
+      )}
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 278,
+    width: 390,
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+  },
+  backendMessageContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  backendMessageText: {
+    fontSize: 18,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    width: "100%",
+    color: "#fff",
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    alignSelf: "flex-start",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

@@ -13,6 +13,9 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_users(db: Session):
     return db.query(models.User).all()
 
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
 # Books
 def create_book(db: Session, book: schemas.BookCreate):
     db_book = models.Book(**book.dict())

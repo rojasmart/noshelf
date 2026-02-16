@@ -75,6 +75,30 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def list_users(db: Session = Depends(get_db)):
     return crud.get_users(db=db)
 
+# Registration endpoint
+@app.post("/register", response_model=schemas.User)
+def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Check if user already exists
+    existing_user = crud.get_user_by_email(db, user.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return crud.create_user(db=db, user=user)
+
+# Login endpoint
+@app.post("/login", response_model=schemas.User)
+def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    # Check if user exists
+    existing_user = crud.get_user_by_email(db, user.email)
+    if not existing_user:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+    
+    # In a real app, you would verify the password hash here
+    # For now, we'll do a simple password comparison
+    if existing_user.password != user.password:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+    
+    return existing_user
+
 # Books
 @app.post("/books", response_model=schemas.Book)
 def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):

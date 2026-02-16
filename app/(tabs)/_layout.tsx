@@ -50,8 +50,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="register"
         options={{
-          title: "Register",
-          tabBarIcon: ({ color }) => <Entypo name="add-user" size={28} color={color} />,
+          title: "Account",
+          tabBarIcon: ({ color }) => <Entypo name="user" size={28} color={color} />,
         }}
       />
     </Tabs>
