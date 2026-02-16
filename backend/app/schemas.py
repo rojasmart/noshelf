@@ -1,5 +1,6 @@
 
 from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
 from enum import Enum
 
@@ -76,3 +77,25 @@ class Request(RequestBase):
     requester: User
     class Config:
         orm_mode = True
+
+
+class LocationCreate(BaseModel):
+    country: str
+    city: str
+    radius_km: int
+
+class MessageBase(BaseModel):
+    sender_id: int
+    receiver_id: int
+    copy_id: int
+    content: str
+
+class MessageCreate(MessageBase):
+    pass
+
+class Message(MessageBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True  # Atualizado para Pydantic v2

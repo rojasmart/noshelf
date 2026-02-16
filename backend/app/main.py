@@ -1,4 +1,8 @@
 from fastapi import FastAPI, Depends
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from itsdangerous import URLSafeTimedSerializer
+from fastapi import HTTPException
+
 from sqlalchemy.orm import Session
 from app import models, schemas, crud
 from app.database import engine, SessionLocal
@@ -7,6 +11,47 @@ from app.database import engine, SessionLocal
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="NoShelf Backend MVP")
+
+
+# Configuração do email
+conf = ConnectionConfig(
+    MAIL_USERNAME="seu_email@gmail.com",
+    MAIL_PASSWORD="sua_senha",
+    MAIL_FROM="seu_email@gmail.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_STARTTLS=True,  # Substitui MAIL_TLS
+    MAIL_SSL_TLS=False,  # Substitui MAIL_SSL
+    USE_CREDENTIALS=True
+)
+
+serializer = URLSafeTimedSerializer("SECRET_KEY")
+
+@app.post("/send-magic-link")
+async def send_magic_link(email: str):
+    token = serializer.dumps(email, salt="email-confirm")
+    link = f"http://localhost:8000/verify/{token}"
+    message = MessageSchema(
+        subject="Seu Magic Link",
+        recipients=[email],
+        body=f"Use este link para acessar: {link}",
+        subtype="plain"
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)
+    return {"message": "Magic link enviado!"}
+
+@app.get("/verify/{token}")
+async def verify_token(token: str):
+    try:
+        email = serializer.loads(token, salt="email-confirm", max_age=3600)
+        # Aqui você pode criar ou autenticar o usuário
+        return {"message": f"Bem-vindo, {email}!"}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado")
+
+
+
 
 # Dependency para o DB
 def get_db():
@@ -57,3 +102,31 @@ def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)
 def list_requests(db: Session = Depends(get_db)):
     return crud.get_requests(db=db)
 
+@app.post("/location")
+def save_location(location: schemas.LocationCreate, db: Session = Depends(get_db)):
+    return crud.save_location(db, location)
+
+
+
+@app.get("/books/nearby")
+def get_books_nearby(lat: float, lon: float, radius_km: int, db: Session = Depends(get_db)):
+    # Query para buscar livros dentro do raio
+    pass
+
+@app.post("/books")
+def add_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
+    return crud.create_book(db, book)
+
+@app.post("/requests")
+def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)):
+    return crud.create_request(db, request)
+
+# Chat
+@app.post("/messages", response_model=schemas.Message)
+def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db)):
+    return crud.create_message(db=db, message=message)
+
+
+@app.get("/messages/{copy_id}", response_model=list[schemas.Message])
+def get_messages(copy_id: int, db: Session = Depends(get_db)):
+    return crud.get_messages_for_copy(db=db, copy_id=copy_id)

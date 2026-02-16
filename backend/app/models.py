@@ -68,3 +68,15 @@ class Request(Base):
 
     copy = relationship("Copy", back_populates="requests")
     requester = relationship("User", back_populates="requests")
+
+class Location(Base):
+    __tablename__ = "locations"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    country = Column(String)
+    city = Column(String)
+    radius_km = Column(Integer, default=10)
+
+    user = relationship("User", back_populates="location")
+
+User.location = relationship("Location", back_populates="user", uselist=False)
