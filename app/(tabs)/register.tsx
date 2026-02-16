@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    color: "#fff",
   },
   input: {
     borderWidth: 1,
@@ -80,5 +81,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     width: "100%",
+    color: "#fff",
   },
 });
