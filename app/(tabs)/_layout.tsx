@@ -19,13 +19,6 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="explore"
         options={{
           title: "Explore",
@@ -36,15 +29,14 @@ export default function TabLayout() {
         name="add-book"
         options={{
           title: "Add Book",
-          tabBarIcon: ({ color }) => <Entypo name="add-to-list" size={28} color={color} />, // Updated icon
+          tabBarIcon: ({ color }) => <Entypo name="add-to-list" size={28} color={color} />,
         }}
       />
-
       <Tabs.Screen
         name="request-book"
         options={{
           title: "Request Book",
-          tabBarIcon: ({ color }) => <Entypo name="book" size={28} color={color} />, // Updated icon
+          tabBarIcon: ({ color }) => <Entypo name="book" size={28} color={color} />,
         }}
       />
       <Tabs.Screen

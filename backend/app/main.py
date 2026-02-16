@@ -108,6 +108,28 @@ def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
 def list_books(db: Session = Depends(get_db)):
     return crud.get_books(db=db)
 
+@app.get("/users/{user_id}/books")
+def get_user_books(user_id: int, db: Session = Depends(get_db)):
+    copies = crud.get_copies_by_owner(db, user_id)
+    books = []
+    for copy in copies:
+        book = crud.get_book(db, copy.book_id)
+        if book:
+            # Add owner info to the book response
+            book_data = {
+                "id": book.id,
+                "title": book.title,
+                "author": book.author,
+                "isbn": book.isbn,
+                "cover_url": book.cover_url,
+                "owner_id": copy.owner_id,
+                "copy_id": copy.id,
+                "condition": copy.condition,
+                "status": copy.status
+            }
+            books.append(book_data)
+    return books
+
 # Copies
 @app.post("/copies", response_model=schemas.Copy)
 def create_copy(copy: schemas.CopyCreate, db: Session = Depends(get_db)):
@@ -138,8 +160,20 @@ def get_books_nearby(lat: float, lon: float, radius_km: int, db: Session = Depen
     pass
 
 @app.post("/books")
-def add_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
-    return crud.create_book(db, book)
+def add_book(book: schemas.BookCreate, owner_id: int, db: Session = Depends(get_db)):
+    # Create the book
+    created_book = crud.create_book(db, book)
+    
+    # Create a copy associated with the owner
+    copy_data = schemas.CopyCreate(
+        book_id=created_book.id,
+        owner_id=owner_id,
+        condition="OK",
+        status="AVAILABLE"
+    )
+    crud.create_copy(db, copy_data)
+    
+    return created_book
 
 @app.post("/requests")
 def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)):

@@ -21,11 +21,10 @@ export default function AddBookScreen() {
     }
 
     try {
-      await api.post("/books", {
+      await api.post(`/books?owner_id=${user.id}`, {
         title,
         author,
         isbn: isbn || `NO-ISBN-${Date.now()}`, // Generate a unique identifier if no ISBN
-        owner_id: user.id,
       });
       Alert.alert("Success", "Book added successfully!");
 

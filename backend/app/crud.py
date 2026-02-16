@@ -38,6 +38,15 @@ def create_copy(db: Session, copy: schemas.CopyCreate):
 def get_copies(db: Session):
     return db.query(models.Copy).all()
 
+def get_books(db: Session):
+    return db.query(models.Book).all()
+
+def get_book(db: Session, book_id: int):
+    return db.query(models.Book).filter(models.Book.id == book_id).first()
+
+def get_copies_by_owner(db: Session, owner_id: int):
+    return db.query(models.Copy).filter(models.Copy.owner_id == owner_id).all()
+
 # Requests
 def create_request(db: Session, request: schemas.RequestCreate):
     db_request = models.Request(**request.dict())
