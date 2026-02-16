@@ -1,16 +1,26 @@
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Button, Platform, StyleSheet, TextInput } from "react-native";
 
-import { HelloWave } from "@/components/hello-wave";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import api from "@/hooks/use-api";
-import { Link } from "expo-router";
+import { Link, useNavigation } from "expo-router";
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      const response = await api.post("/send-magic-link", { email });
+      alert("Magic Link enviado para o seu email!");
+    } catch (error) {
+      console.error("Erro ao enviar Magic Link:", error);
+    }
+  };
 
   useEffect(() => {
     api
@@ -22,11 +32,23 @@ export default function HomeScreen() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={<Image source={require("@/assets/images/partial-react-logo.png")} style={styles.reactLogo} />}
+      headerImage={<Image source={require("@/assets/images/noshelf-book.jpg")} style={styles.reactLogo} />}
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        <ThemedText type="title">Bem-vindo!</ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Registre seu email para acessar os recursos:</ThemedText>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Digite seu email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <Button title="Registar Email" onPress={handleLogin} />
+        <ThemedText>Após registar o seu email, poderá adicionar, listar e requisitar livros.</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
@@ -86,8 +108,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reactLogo: {
-    height: 178,
-    width: 290,
+    height: 278,
+    width: 390,
     bottom: 0,
     left: 0,
     position: "absolute",
@@ -99,5 +121,13 @@ const styles = StyleSheet.create({
   },
   backendMessageText: {
     fontSize: 18,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    width: "100%",
   },
 });
