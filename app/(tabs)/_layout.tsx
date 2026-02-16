@@ -47,6 +47,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Entypo name="book" size={28} color={color} />, // Updated icon
         }}
       />
+      <Tabs.Screen
+        name="register"
+        options={{
+          title: "Register",
+          tabBarIcon: ({ color }) => <Entypo name="add-user" size={28} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

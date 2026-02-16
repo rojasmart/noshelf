@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { Button, StyleSheet, TextInput } from "react-native";
+import { StyleSheet } from "react-native";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
@@ -11,14 +11,15 @@ import { useNavigation } from "expo-router";
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     try {
-      const response = await api.post("/send-magic-link", { email });
-      alert("Magic Link enviado para o seu email!");
+      const response = await api.post("/register", { email, password });
+      alert("User registered successfully!");
     } catch (error) {
-      console.error("Erro ao enviar Magic Link:", error);
+      console.error("Error registering user:", error);
     }
   };
 
@@ -37,23 +38,10 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Register your email</ThemedText>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Your email"
-          placeholderTextColor="#888" // Define a cor do placeholder
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <Button title="Register Email" onPress={handleLogin} />
-        <ThemedText>After register your email you can add, list and request books.</ThemedText>
-      </ThemedView>
+
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Register</ThemedText>
-        <ThemedText>Register your email to access the app features. Once registered, you can explore, add, and request books.</ThemedText>
+        <ThemedText>Register to access the app features. Once registered, you can explore, add, and request books.</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 2: Explore Lists</ThemedText>
@@ -66,9 +54,6 @@ export default function HomeScreen() {
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 4: Request a Book</ThemedText>
         <ThemedText>Request books from others and start a conversation to arrange the exchange.</ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.backendMessageContainer}>
-        <ThemedText style={styles.backendMessageText}>Backend Message: {message}</ThemedText>
       </ThemedView>
     </ParallaxScrollView>
   );
