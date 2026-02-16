@@ -21,7 +21,12 @@ export default function RegisterScreen() {
         genres,
       });
       alert("User registered successfully!");
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response) {
+        alert(`Error: ${error.response.data.detail}`);
+      } else {
+        alert("An unexpected error occurred.");
+      }
       console.error("Error registering user:", error);
     }
   };
