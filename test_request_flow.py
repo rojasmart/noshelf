@@ -182,13 +182,31 @@ def test_book_request_flow():
             
             # Verificar status final da cópia
             copies_response = requests.get(f"{BASE_URL}/users/{rogerio['id']}/books")
-            copies = copies_response.json()
-            for copy in copies:
+            rogerio_copies = copies_response.json()
+            copy_found_in_rogerio = False
+            for copy in rogerio_copies:
                 if copy['copy_id'] == copy_id:
-                    print(f"✓ Status final da cópia: {copy['status']}")
-                    if copy['status'] != 'BORROWED':
-                        print(f"⚠️ Esperado BORROWED, obtido {copy['status']}")
+                    copy_found_in_rogerio = True
+                    print(f"⚠️ Livro ainda está na lista do Rogerio: {copy['status']}")
                     break
+            
+            if not copy_found_in_rogerio:
+                print("✓ Livro removido da lista do Rogerio (transferência realizada)")
+            
+            # Verificar se o livro apareceu na lista da Carmina
+            carmina_copies_response = requests.get(f"{BASE_URL}/users/{carmina['id']}/books")
+            carmina_copies = carmina_copies_response.json()
+            copy_found_in_carmina = False
+            for copy in carmina_copies:
+                if copy['title'] == book_data['title'] and copy['author'] == book_data['author']:
+                    copy_found_in_carmina = True
+                    print(f"✓ Livro transferido para Carmina: Status {copy['status']}, Owner ID {copy.get('owner_id', 'N/A')}")
+                    if copy['status'] != 'AVAILABLE':
+                        print(f"⚠️ Esperado AVAILABLE, obtido {copy['status']}")
+                    break
+            
+            if not copy_found_in_carmina:
+                print("✗ Livro não encontrado na lista da Carmina")
                     
             # Verificar status final do request
             outgoing_response = requests.get(f"{BASE_URL}/users/{carmina['id']}/outgoing-requests")

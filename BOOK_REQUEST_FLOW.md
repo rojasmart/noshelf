@@ -8,6 +8,30 @@
 
 **Solução:** Migração SQL executada com sucesso que adicionou os novos valores aos enums.
 
+## 🔄 Transferência de Propriedade Implementada
+
+**Pergunta:** Depois de completado, o owner muda? O Lost World passa para a Carmina?
+
+**Resposta:** ✅ **SIM!** Implementado sistema completo de transferência de propriedade:
+
+### Teste Realizado:
+
+1. **Carmina requisitou o livro "Lost World" do rogeriosvaldo**
+2. **Rogeriosvaldo aceitou o request**
+3. **Carmina confirmou a entrega**
+4. **Resultado:** Livro "Lost World" transferido completamente para a Carmina
+
+### Evidência:
+
+- ❌ Livro "Lost World" removido da lista do rogeriosvaldo
+- ✅ Livro "Lost World" adicionado à lista da Carmina com `owner_id = 3`
+- ✅ Status voltou para `AVAILABLE` (pronto para nova requisição)
+
+### Teste Adicional (Sphere):
+
+1. Carmina também requisitou o livro "Sphere" do rojasmart
+2. Transferência automática funcionou perfeitamente
+
 ## Fluxo Implementado
 
 ### 1. Estado Inicial
@@ -32,7 +56,8 @@
 
 - Após o encontro físico, a `carmina` (receiver) confirma a receção
 - Status do request muda para `COMPLETED`
-- Status da cópia muda para `BORROWED`
+- **🔄 TRANSFERÊNCIA DE PROPRIEDADE:** O livro passa a pertencer à `carmina`
+- Status da cópia volta para `AVAILABLE` (disponível na lista da nova owner)
 
 ## Status Possíveis
 
@@ -41,7 +66,7 @@
 - `AVAILABLE` - Disponível para requisição
 - `REQUESTED` - _(não usado neste fluxo)_
 - `RESERVED` - Reservado após aceitação do owner
-- `BORROWED` - Emprestado após confirmação do receiver
+- `BORROWED` - _(removido - agora transfere propriedade diretamente)_
 
 ### Request Status
 

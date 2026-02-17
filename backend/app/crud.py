@@ -92,7 +92,7 @@ def accept_request(db: Session, request_id: int):
     return db_request
 
 def confirm_delivery(db: Session, request_id: int):
-    """Confirma a entrega (receiver confirma) - muda status para COMPLETED"""
+    """Confirma a entrega (receiver confirma) - muda status para COMPLETED e transfere propriedade"""
     db_request = db.query(models.Request).filter(models.Request.id == request_id).first()
     if not db_request:
         return None
@@ -100,10 +100,12 @@ def confirm_delivery(db: Session, request_id: int):
     # Atualiza o status do request
     db_request.status = models.RequestStatus.COMPLETED
     
-    # Atualiza o status da cópia para BORROWED
+    # Transfere a propriedade da cópia para o requester
     db_copy = db.query(models.Copy).filter(models.Copy.id == db_request.copy_id).first()
     if db_copy:
-        db_copy.status = models.CopyStatus.BORROWED
+        # MUDANÇA IMPORTANTE: Transferir propriedade
+        db_copy.owner_id = db_request.requester_id  # Novo owner é o requester
+        db_copy.status = models.CopyStatus.AVAILABLE  # Volta a estar disponível para o novo owner
     
     db.commit()
     db.refresh(db_request)
