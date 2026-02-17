@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
@@ -45,6 +46,39 @@ export default function ExploreScreen() {
     }
   };
 
+  const navigateToMunicipality = (municipality: string) => {
+    router.push({
+      pathname: "/municipality",
+      params: {
+        municipality,
+        books: JSON.stringify(groupedBooks[municipality] || []),
+      },
+    });
+  };
+
+  const regions = {
+    "Grande Lisboa": [
+      "Alcochete",
+      "Almada",
+      "Amadora",
+      "Barreiro",
+      "Cascais",
+      "Lisboa (capital)",
+      "Loures",
+      "Mafra",
+      "Moita",
+      "Montijo",
+      "Odivelas",
+      "Oeiras",
+      "Palmela",
+      "Seixal",
+      "Sesimbra",
+      "Setúbal",
+      "Sintra",
+      "Vila Franca de Xira",
+    ],
+  };
+
   return (
     <ThemedView style={{ flex: 1, padding: 20, paddingTop: 50 }}>
       <ThemedView style={styles.titleContainer}>
@@ -52,38 +86,23 @@ export default function ExploreScreen() {
       </ThemedView>
 
       <ScrollView>
-        {!user && (
-          <ThemedView style={styles.stepContainer}>
-            <ThemedText>Please register first to request books!</ThemedText>
-          </ThemedView>
-        )}
-
         {loading ? (
           <ThemedView style={styles.stepContainer}>
             <ThemedText>Loading books...</ThemedText>
           </ThemedView>
-        ) : Object.keys(groupedBooks).length > 0 ? (
-          Object.entries(groupedBooks).map(([municipio, books]) => (
-            <ThemedView key={municipio} style={styles.stepContainer}>
-              <ThemedText type="subtitle">Municipality: {municipio}</ThemedText>
-              {books.map((book: any) => (
-                <ThemedView key={book.id} style={styles.stepContainer}>
-                  <ThemedText>{book.title}</ThemedText>
-                  <ThemedText>by {book.author}</ThemedText>
-                  <ThemedText>ISBN: {book.isbn}</ThemedText>
-                  {user && (
-                    <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
-                      <ThemedText style={styles.buttonText}>Request Book</ThemedText>
-                    </TouchableOpacity>
-                  )}
-                </ThemedView>
+        ) : (
+          Object.entries(regions).map(([region, municipalities]) => (
+            <ThemedView key={region} style={styles.stepContainer}>
+              <ThemedText type="subtitle">{region}</ThemedText>
+              {municipalities.map((municipality) => (
+                <TouchableOpacity key={municipality} style={styles.stepContainer} onPress={() => navigateToMunicipality(municipality)}>
+                  <ThemedText>
+                    {municipality}: {groupedBooks[municipality]?.length || 0} items
+                  </ThemedText>
+                </TouchableOpacity>
               ))}
             </ThemedView>
           ))
-        ) : (
-          <ThemedView style={styles.stepContainer}>
-            <ThemedText>No books available yet</ThemedText>
-          </ThemedView>
         )}
       </ScrollView>
     </ThemedView>
