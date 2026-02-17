@@ -33,7 +33,10 @@ class User(Base):
     genres = Column(String)  # Store as comma-separated string
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    copies = relationship("Copy", back_populates="owner")
+    # copies: current copies owned by this user
+    copies = relationship("Copy", back_populates="owner", foreign_keys='Copy.owner_id')
+    # original_copies: copies that this user originally owned (useful to show transfer history)
+    original_copies = relationship("Copy", back_populates="original_owner", foreign_keys='Copy.original_owner_id')
     requests = relationship("Request", back_populates="requester")
 
 class Book(Base):
@@ -51,13 +54,18 @@ class Copy(Base):
     id = Column(Integer, primary_key=True, index=True)
     book_id = Column(Integer, ForeignKey("books.id"))
     owner_id = Column(Integer, ForeignKey("users.id"))
+    # original_owner_id stores who first owned this copy (helps track transfers)
+    original_owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     condition = Column(Enum(BookCondition), default=BookCondition.OK)
     status = Column(Enum(CopyStatus), default=CopyStatus.AVAILABLE)
     location = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     book = relationship("Book", back_populates="copies")
-    owner = relationship("User", back_populates="copies")
+    # Explicitly declare foreign_keys to avoid AmbiguousForeignKeysError when
+    # there are multiple FKs to the users table.
+    owner = relationship("User", back_populates="copies", foreign_keys=[owner_id])
+    original_owner = relationship("User", back_populates="original_copies", foreign_keys=[original_owner_id])
     requests = relationship("Request", back_populates="copy")  # Added back_populates for requests
 
 class Request(Base):

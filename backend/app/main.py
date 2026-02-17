@@ -143,36 +143,27 @@ def get_user_books(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/transferred-books")
 def get_transferred_books(user_id: int, db: Session = Depends(get_db)):
-    """Get books that this user originally owned but transferred to others - Simple hardcoded version"""
+    """Get books that this user originally owned but transferred to others."""
     print(f"Fetching transferred books for user_id: {user_id}")
-    
-    # Hardcoded response for user 2 (rogeriosvaldo) based on known transfers
-    if user_id == 2:  # Rogerio
-        return [
-            {
-                "title": "Lost world", 
-                "author": "Michael Crichton",
-                "isbn": "3383839333",
-                "copy_id": 3,
-                "condition": "OK",
-                "status": "AVAILABLE",
-                "current_owner_name": "Carmina",
-                "current_owner_email": "carmina@gmail.com",
-            },
-            {
-                "title": "Sphere",
-                "author": "Michael Crichton", 
-                "isbn": "999382829",
-                "copy_id": 2,
-                "condition": "OK",
-                "status": "AVAILABLE", 
-                "current_owner_name": "Carmina",
-                "current_owner_email": "carmina@gmail.com",
-            }
-        ]
-    
-    # For other users, return empty list for now
-    return []
+
+    copies = crud.get_transferred_copies(db, original_owner_id=user_id)
+    result = []
+    for copy in copies:
+        book = copy.book
+        owner = copy.owner
+        result.append({
+            "title": book.title if book else None,
+            "author": book.author if book else None,
+            "isbn": book.isbn if book else None,
+            "copy_id": copy.id,
+            "condition": copy.condition,
+            "status": copy.status,
+            "current_owner_id": owner.id if owner else None,
+            "current_owner_name": owner.name if owner else None,
+            "current_owner_email": owner.email if owner else None,
+        })
+
+    return result
 
 # Copies
 @app.post("/copies", response_model=schemas.Copy)

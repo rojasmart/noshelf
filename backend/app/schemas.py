@@ -63,11 +63,13 @@ class CopyBase(BaseModel):
 class CopyCreate(CopyBase):
     book_id: int
     owner_id: int
+    original_owner_id: Optional[int] = None
 
 class Copy(CopyBase):
     id: int
     book: Book
     owner: User
+    original_owner_id: Optional[int] = None
     class Config:
         orm_mode = True
 

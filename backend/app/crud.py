@@ -29,7 +29,11 @@ def get_books(db: Session):
 
 # Copies
 def create_copy(db: Session, copy: schemas.CopyCreate):
-    db_copy = models.Copy(**copy.dict())
+    data = copy.dict()
+    # If original_owner_id not provided, set it to the initial owner_id
+    if not data.get("original_owner_id"):
+        data["original_owner_id"] = data.get("owner_id")
+    db_copy = models.Copy(**data)
     db.add(db_copy)
     db.commit()
     db.refresh(db_copy)
@@ -46,6 +50,13 @@ def get_book(db: Session, book_id: int):
 
 def get_copies_by_owner(db: Session, owner_id: int):
     return db.query(models.Copy).filter(models.Copy.owner_id == owner_id).all()
+
+def get_transferred_copies(db: Session, original_owner_id: int):
+    """Return copies that were originally owned by original_owner_id but are now owned by someone else."""
+    return db.query(models.Copy).filter(
+        models.Copy.original_owner_id == original_owner_id,
+        models.Copy.owner_id != original_owner_id
+    ).all()
 
 # Requests
 def create_request(db: Session, request: schemas.RequestCreate):
