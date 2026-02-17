@@ -46,7 +46,7 @@ export default function ExploreScreen() {
   };
 
   return (
-    <ThemedView style={{ flex: 1, marginTop: 30, padding: 16 }}>
+    <ThemedView style={{ flex: 1, padding: 20, paddingTop: 50 }}>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Available Books</ThemedText>
       </ThemedView>
