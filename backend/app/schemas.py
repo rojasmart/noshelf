@@ -71,7 +71,7 @@ class Copy(CopyBase):
 
 class RequestBase(BaseModel):
     message: Optional[str] = None
-    status: RequestStatus
+    status: Optional[RequestStatus] = RequestStatus.PENDING
 
 class RequestCreate(RequestBase):
     copy_id: int

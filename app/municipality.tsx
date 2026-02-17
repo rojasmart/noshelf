@@ -10,7 +10,7 @@ export default function MunicipalityScreen() {
   // Parse the books from JSON string
   const booksArray = books ? JSON.parse(books as string) : [];
 
-  const requestBook = async (bookId: number, title: string) => {
+  const requestBook = async (copyId: number, title: string) => {
     if (!user) {
       Alert.alert("Login Required", "Please register first to request books!");
       return;
@@ -18,7 +18,7 @@ export default function MunicipalityScreen() {
 
     try {
       await api.post("/requests", {
-        book_id: bookId,
+        copy_id: copyId,
         requester_id: user.id,
         message: `I would like to borrow "${title}"`,
       });
@@ -40,7 +40,7 @@ export default function MunicipalityScreen() {
               <Text>Author: {book.author}</Text>
               <Text>ISBN: {book.isbn}</Text>
               {user && (
-                <TouchableOpacity style={styles.requestButton} onPress={() => requestBook(book.id, book.title)}>
+                <TouchableOpacity style={styles.requestButton} onPress={() => requestBook(book.copy_id, book.title)}>
                   <Text style={styles.requestButtonText}>Request Book</Text>
                 </TouchableOpacity>
               )}
