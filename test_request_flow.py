@@ -140,16 +140,22 @@ def test_book_request_flow():
     print("\\n=== ROGERIO ACEITA REQUEST ===")
     try:
         accept_response = requests.put(f"{BASE_URL}/requests/{request_id}/accept")
-        accept_result = accept_response.json()
-        print(f"✓ Request aceito: {accept_result['message']}")
-        
-        # Verificar status da cópia após aceitação
-        copies_response = requests.get(f"{BASE_URL}/users/{rogerio['id']}/books")
-        copies = copies_response.json()
-        for copy in copies:
-            if copy['copy_id'] == copy_id:
-                print(f"✓ Status da cópia após aceitação: {copy['status']}")
-                break
+        if accept_response.status_code == 200:
+            accept_result = accept_response.json()
+            print(f"✓ Request aceito: {accept_result['message']}")
+            
+            # Verificar status da cópia após aceitação
+            copies_response = requests.get(f"{BASE_URL}/users/{rogerio['id']}/books")
+            copies = copies_response.json()
+            for copy in copies:
+                if copy['copy_id'] == copy_id:
+                    print(f"✓ Status da cópia após aceitação: {copy['status']}")
+                    if copy['status'] != 'RESERVED':
+                        print(f"⚠️ Esperado RESERVED, obtido {copy['status']}")
+                    break
+        else:
+            print(f"✗ Erro ao aceitar request: {accept_response.status_code} - {accept_response.text}")
+            return
                 
     except Exception as e:
         print(f"✗ Erro ao aceitar request: {e}")
@@ -170,24 +176,32 @@ def test_book_request_flow():
     print("\\n=== CARMINA CONFIRMA ENTREGA ===")
     try:
         delivery_response = requests.put(f"{BASE_URL}/requests/{request_id}/confirm-delivery")
-        delivery_result = delivery_response.json()
-        print(f"✓ Entrega confirmada: {delivery_result['message']}")
-        
-        # Verificar status final da cópia
-        copies_response = requests.get(f"{BASE_URL}/users/{rogerio['id']}/books")
-        copies = copies_response.json()
-        for copy in copies:
-            if copy['copy_id'] == copy_id:
-                print(f"✓ Status final da cópia: {copy['status']}")
-                break
-                
-        # Verificar status final do request
-        outgoing_response = requests.get(f"{BASE_URL}/users/{carmina['id']}/outgoing-requests")
-        outgoing_requests = outgoing_response.json()
-        for req in outgoing_requests:
-            if req['id'] == request_id:
-                print(f"✓ Status final do request: {req['status']}")
-                break
+        if delivery_response.status_code == 200:
+            delivery_result = delivery_response.json()
+            print(f"✓ Entrega confirmada: {delivery_result['message']}")
+            
+            # Verificar status final da cópia
+            copies_response = requests.get(f"{BASE_URL}/users/{rogerio['id']}/books")
+            copies = copies_response.json()
+            for copy in copies:
+                if copy['copy_id'] == copy_id:
+                    print(f"✓ Status final da cópia: {copy['status']}")
+                    if copy['status'] != 'BORROWED':
+                        print(f"⚠️ Esperado BORROWED, obtido {copy['status']}")
+                    break
+                    
+            # Verificar status final do request
+            outgoing_response = requests.get(f"{BASE_URL}/users/{carmina['id']}/outgoing-requests")
+            outgoing_requests = outgoing_response.json()
+            for req in outgoing_requests:
+                if req['id'] == request_id:
+                    print(f"✓ Status final do request: {req['status']}")
+                    if req['status'] != 'COMPLETED':
+                        print(f"⚠️ Esperado COMPLETED, obtido {req['status']}")
+                    break
+        else:
+            print(f"✗ Erro ao confirmar entrega: {delivery_response.status_code} - {delivery_response.text}")
+            return
                 
     except Exception as e:
         print(f"✗ Erro ao confirmar entrega: {e}")

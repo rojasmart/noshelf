@@ -1,5 +1,13 @@
 # Sistema de Gestão de Requests de Livros
 
+## ✅ Problema Resolvido
+
+**Erro:** `invalid input value for enum copystatus: "RESERVED"`
+
+**Causa:** O banco PostgreSQL não tinha o valor "RESERVED" nos enums `copystatus` e `requeststatus`.
+
+**Solução:** Migração SQL executada com sucesso que adicionou os novos valores aos enums.
+
 ## Fluxo Implementado
 
 ### 1. Estado Inicial
@@ -76,6 +84,19 @@ POST /requests
 GET /requests/{request_id}/messages
 POST /requests/{request_id}/messages
 ```
+
+## Configuração do Banco de Dados
+
+### Migração Necessária
+
+Antes de usar os novos status RESERVED, execute a migração SQL:
+
+```bash
+cd /media/rogerio/PROMETHEUS/Personal/noshelf/backend
+PGPASSWORD="Carminauriel1984" psql -h localhost -U noshelf_user -d noshelf -f migrate_status_enum.sql
+```
+
+Esta migração adiciona o valor "RESERVED" aos enums `copystatus` e `requeststatus` no PostgreSQL.
 
 ## Teste do Fluxo
 
