@@ -7,8 +7,9 @@ import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 export default function RequestBookScreen() {
   const [requests, setRequests] = useState<any[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
+  const [myBooks, setMyBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests" or "incoming"
+  const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests", "incoming", or "my-library"
   const { user } = useUser();
 
   const getStatusColor = (status: string) => {
@@ -35,9 +36,39 @@ export default function RequestBookScreen() {
       case "RESERVED":
         return "Reserved";
       case "COMPLETED":
-        return "Completed";
+        return "Completed ✅";
       default:
         return status;
+    }
+  };
+
+  const renderTransferBadge = (status: string) => {
+    if (status.toUpperCase() === "COMPLETED") {
+      return (
+        <View style={styles.transferBadge}>
+          <Text style={styles.transferBadgeText}>📚 Book Transferred</Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const renderBookOriginBadge = (book: any) => {
+    // Verifica se este livro foi adquirido via request completado
+    const wasAcquired = requests.some((req) => req.book_title === book.title && req.book_author === book.author && req.status === "COMPLETED");
+
+    if (wasAcquired) {
+      return (
+        <View style={styles.acquiredBadge}>
+          <Text style={styles.acquiredBadgeText}>📖 Acquired via Request</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.originalBadge}>
+          <Text style={styles.originalBadgeText}>⭐ Original Book</Text>
+        </View>
+      );
     }
   };
 
@@ -45,6 +76,7 @@ export default function RequestBookScreen() {
     if (user) {
       fetchMyRequests();
       fetchIncomingRequests();
+      fetchMyBooks();
     } else {
       setLoading(false);
     }
@@ -69,6 +101,16 @@ export default function RequestBookScreen() {
       console.log("Incoming requests:", response.data);
     } catch (error) {
       console.error("Error fetching incoming requests:", error);
+    }
+  };
+
+  const fetchMyBooks = async () => {
+    try {
+      const response = await api.get(`/users/${user?.id}/books`);
+      setMyBooks(response.data);
+      console.log("My books:", response.data);
+    } catch (error) {
+      console.error("Error fetching my books:", error);
     }
   };
 
@@ -146,6 +188,9 @@ export default function RequestBookScreen() {
         <TouchableOpacity style={[styles.tab, activeTab === "incoming" && styles.activeTab]} onPress={() => setActiveTab("incoming")}>
           <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>Incoming ({incomingRequests.length})</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={[styles.tab, activeTab === "my-library" && styles.activeTab]} onPress={() => setActiveTab("my-library")}>
+          <Text style={[styles.tabText, activeTab === "my-library" && styles.activeTabText]}>My Library ({myBooks.length})</Text>
+        </TouchableOpacity>
       </View>
 
       {/* My Requests Tab */}
@@ -162,10 +207,12 @@ export default function RequestBookScreen() {
                     Requested from: {request.owner_name} ({request.owner_email})
                   </Text>
                   <Text style={styles.requestMessage}>Message: {request.message}</Text>
-                  <Text style={[styles.requestStatus, { color: getStatusColor(request.status || "PENDING") }]}>
-                    Status: {getStatusDisplayText(request.status || "PENDING")}
+                  <Text style={[styles.requestStatus, { color: getStatusColor(request.status) }]}>
+                    Status: {getStatusDisplayText(request.status)}
                   </Text>
-                  <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
+                  <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>
+
+                  {renderTransferBadge(request.status)}
 
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, false)}>
@@ -213,7 +260,9 @@ export default function RequestBookScreen() {
                   <Text style={[styles.requestStatus, { color: getStatusColor(request.status) }]}>
                     Status: {getStatusDisplayText(request.status)}
                   </Text>
-                  <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>
+                  <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
+
+                  {renderTransferBadge(request.status)}
 
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, true)}>
@@ -233,6 +282,33 @@ export default function RequestBookScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>No incoming requests for your books.</Text>
               <Text style={styles.emptySubtext}>When someone requests your books, they'll appear here!</Text>
+            </View>
+          )}
+        </>
+      )}
+
+      {/* My Library Tab */}
+      {activeTab === "my-library" && (
+        <>
+          {myBooks.length > 0 ? (
+            <ScrollView style={styles.scrollView}>
+              {myBooks.map((book: any) => (
+                <View key={book.copy_id} style={styles.myBookCard}>
+                  <Text style={styles.myBookTitle}>
+                    {book.title} by {book.author}
+                  </Text>
+                  <Text style={styles.myBookInfo}>ISBN: {book.isbn}</Text>
+                  <Text style={styles.myBookInfo}>Condition: {book.condition}</Text>
+                  <Text style={styles.myBookInfo}>Status: {book.status}</Text>
+
+                  {renderBookOriginBadge(book)}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>You don't have any books yet.</Text>
+              <Text style={styles.emptySubtext}>Add your first book to get started!</Text>
             </View>
           )}
         </>
@@ -409,5 +485,66 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  transferBadge: {
+    backgroundColor: "#28a745",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  transferBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  acquiredBadge: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  acquiredBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  originalBadge: {
+    backgroundColor: "#FFA500",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  originalBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  myBookCard: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  myBookTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  myBookInfo: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 5,
   },
 });
