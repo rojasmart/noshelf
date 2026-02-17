@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -51,34 +51,36 @@ export default function ExploreScreen() {
         <ThemedText type="title">Available Books</ThemedText>
       </ThemedView>
 
-      {!user && (
-        <ThemedView style={styles.stepContainer}>
-          <ThemedText>Please register first to request books!</ThemedText>
-        </ThemedView>
-      )}
-
-      {loading ? (
-        <ThemedView style={styles.stepContainer}>
-          <ThemedText>Loading books...</ThemedText>
-        </ThemedView>
-      ) : books.length > 0 ? (
-        books.map((book: any) => (
-          <ThemedView key={book.id} style={styles.stepContainer}>
-            <ThemedText type="subtitle">{book.title}</ThemedText>
-            <ThemedText>by {book.author}</ThemedText>
-            <ThemedText>ISBN: {book.isbn}</ThemedText>
-            {user && (
-              <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
-                <ThemedText style={styles.buttonText}>Request Book</ThemedText>
-              </TouchableOpacity>
-            )}
+      <ScrollView>
+        {!user && (
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText>Please register first to request books!</ThemedText>
           </ThemedView>
-        ))
-      ) : (
-        <ThemedView style={styles.stepContainer}>
-          <ThemedText>No books available yet</ThemedText>
-        </ThemedView>
-      )}
+        )}
+
+        {loading ? (
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText>Loading books...</ThemedText>
+          </ThemedView>
+        ) : books.length > 0 ? (
+          books.map((book: any) => (
+            <ThemedView key={book.id} style={styles.stepContainer}>
+              <ThemedText type="subtitle">{book.title}</ThemedText>
+              <ThemedText>by {book.author}</ThemedText>
+              <ThemedText>ISBN: {book.isbn}</ThemedText>
+              {user && (
+                <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
+                  <ThemedText style={styles.buttonText}>Request Book</ThemedText>
+                </TouchableOpacity>
+              )}
+            </ThemedView>
+          ))
+        ) : (
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText>No books available yet</ThemedText>
+          </ThemedView>
+        )}
+      </ScrollView>
     </ThemedView>
   );
 }

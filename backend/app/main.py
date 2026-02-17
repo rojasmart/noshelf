@@ -27,19 +27,6 @@ conf = ConnectionConfig(
 
 serializer = URLSafeTimedSerializer("SECRET_KEY")
 
-@app.post("/send-magic-link")
-async def send_magic_link(email: str):
-    token = serializer.dumps(email, salt="email-confirm")
-    link = f"http://localhost:8000/verify/{token}"
-    message = MessageSchema(
-        subject="Seu Magic Link",
-        recipients=[email],
-        body=f"Use este link para acessar: {link}",
-        subtype="plain"
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
-    return {"message": "Magic link enviado!"}
 
 @app.get("/verify/{token}")
 async def verify_token(token: str):
@@ -49,9 +36,6 @@ async def verify_token(token: str):
         return {"message": f"Bem-vindo, {email}!"}
     except Exception:
         raise HTTPException(status_code=400, detail="Token inválido ou expirado")
-
-
-
 
 # Dependency para o DB
 def get_db():
