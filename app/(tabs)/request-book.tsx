@@ -8,8 +8,9 @@ export default function RequestBookScreen() {
   const [requests, setRequests] = useState<any[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [myBooks, setMyBooks] = useState<any[]>([]);
+  const [transferredBooks, setTransferredBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests", "incoming", or "my-library"
+  const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests", "incoming", "my-library", or "transfer-history"
   const { user } = useUser();
 
   const getStatusColor = (status: string) => {
@@ -72,11 +73,25 @@ export default function RequestBookScreen() {
     }
   };
 
+  const renderTransferHistoryBadge = () => {
+    return (
+      <View style={styles.transferredBadge}>
+        <Text style={styles.transferredBadgeText}>📤 Transferred Out</Text>
+      </View>
+    );
+  };
+
+  const getTransferredBooks = () => {
+    // Returns books that this user originally owned but transferred to others
+    return transferredBooks;
+  };
+
   useEffect(() => {
     if (user) {
       fetchMyRequests();
       fetchIncomingRequests();
       fetchMyBooks();
+      fetchTransferredBooks();
     } else {
       setLoading(false);
     }
@@ -111,6 +126,16 @@ export default function RequestBookScreen() {
       console.log("My books:", response.data);
     } catch (error) {
       console.error("Error fetching my books:", error);
+    }
+  };
+
+  const fetchTransferredBooks = async () => {
+    try {
+      const response = await api.get(`/users/${user?.id}/transferred-books`);
+      setTransferredBooks(response.data);
+      console.log("Transferred books:", response.data);
+    } catch (error) {
+      console.error("Error fetching transferred books:", error);
     }
   };
 
@@ -153,6 +178,8 @@ export default function RequestBookScreen() {
       Alert.alert("Success", "Delivery confirmed successfully!");
       fetchMyRequests(); // Refresh both lists
       fetchIncomingRequests();
+      fetchMyBooks(); // Refresh library
+      fetchTransferredBooks(); // Refresh transfer history
     } catch (error) {
       console.error("Error confirming delivery:", error);
       Alert.alert("Error", "Failed to confirm delivery.");
@@ -183,13 +210,16 @@ export default function RequestBookScreen() {
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity style={[styles.tab, activeTab === "my-requests" && styles.activeTab]} onPress={() => setActiveTab("my-requests")}>
-          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>My Requests ({requests.length})</Text>
+          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>Requests ({requests.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === "incoming" && styles.activeTab]} onPress={() => setActiveTab("incoming")}>
           <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>Incoming ({incomingRequests.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === "my-library" && styles.activeTab]} onPress={() => setActiveTab("my-library")}>
-          <Text style={[styles.tabText, activeTab === "my-library" && styles.activeTabText]}>My Library ({myBooks.length})</Text>
+          <Text style={[styles.tabText, activeTab === "my-library" && styles.activeTabText]}>Library ({myBooks.length})</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.tab, activeTab === "transfer-history" && styles.activeTab]} onPress={() => setActiveTab("transfer-history")}>
+          <Text style={[styles.tabText, activeTab === "transfer-history" && styles.activeTabText]}>Transferred ({getTransferredBooks().length})</Text>
         </TouchableOpacity>
       </View>
 
@@ -309,6 +339,36 @@ export default function RequestBookScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>You don't have any books yet.</Text>
               <Text style={styles.emptySubtext}>Add your first book to get started!</Text>
+            </View>
+          )}
+        </>
+      )}
+
+      {/* Transfer History Tab */}
+      {activeTab === "transfer-history" && (
+        <>
+          {getTransferredBooks().length > 0 ? (
+            <ScrollView style={styles.scrollView}>
+              {getTransferredBooks().map((book: any) => (
+                <View key={book.copy_id} style={styles.myBookCard}>
+                  <Text style={styles.myBookTitle}>
+                    {book.title} by {book.author}
+                  </Text>
+                  <Text style={styles.myBookInfo}>
+                    📤 Transferred to: {book.current_owner_name} ({book.current_owner_email})
+                  </Text>
+                  <Text style={styles.myBookInfo}>ISBN: {book.isbn}</Text>
+                  <Text style={styles.myBookInfo}>Condition: {book.condition}</Text>
+                  <Text style={styles.myBookInfo}>Current Status: {book.status}</Text>
+
+                  {renderTransferHistoryBadge()}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No books transferred yet.</Text>
+              <Text style={styles.emptySubtext}>When you accept requests and transfer books, they'll appear here!</Text>
             </View>
           )}
         </>
@@ -521,6 +581,19 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   originalBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  transferredBadge: {
+    backgroundColor: "#FF6B6B",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  transferredBadgeText: {
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
