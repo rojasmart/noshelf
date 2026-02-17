@@ -72,9 +72,24 @@ export default function AddBookScreen() {
 
       <Picker selectedValue={municipio} onValueChange={(itemValue: string) => setMunicipio(itemValue)} style={styles.input}>
         <Picker.Item label="Select Municipality *" value="" />
-        <Picker.Item label="Municipality A" value="Municipality A" />
-        <Picker.Item label="Municipality B" value="Municipality B" />
-        <Picker.Item label="Municipality C" value="Municipality C" />
+        <Picker.Item label="Alcochete" value="Alcochete" />
+        <Picker.Item label="Almada" value="Almada" />
+        <Picker.Item label="Amadora" value="Amadora" />
+        <Picker.Item label="Barreiro" value="Barreiro" />
+        <Picker.Item label="Cascais" value="Cascais" />
+        <Picker.Item label="Lisboa (capital)" value="Lisboa (capital)" />
+        <Picker.Item label="Loures" value="Loures" />
+        <Picker.Item label="Mafra" value="Mafra" />
+        <Picker.Item label="Moita" value="Moita" />
+        <Picker.Item label="Montijo" value="Montijo" />
+        <Picker.Item label="Odivelas" value="Odivelas" />
+        <Picker.Item label="Oeiras" value="Oeiras" />
+        <Picker.Item label="Palmela" value="Palmela" />
+        <Picker.Item label="Seixal" value="Seixal" />
+        <Picker.Item label="Sesimbra" value="Sesimbra" />
+        <Picker.Item label="Setúbal" value="Setúbal" />
+        <Picker.Item label="Sintra" value="Sintra" />
+        <Picker.Item label="Vila Franca de Xira" value="Vila Franca de Xira" />
       </Picker>
 
       <Button title="Add Book" onPress={addBook} />
