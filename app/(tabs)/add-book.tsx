@@ -1,5 +1,6 @@
 import api from "@/hooks/use-api";
 import { useUser } from "@/hooks/use-user";
+import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -7,6 +8,7 @@ export default function AddBookScreen() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [isbn, setIsbn] = useState("");
+  const [municipio, setMunicipio] = useState("");
   const { user } = useUser();
 
   const addBook = async () => {
@@ -15,16 +17,16 @@ export default function AddBookScreen() {
       return;
     }
 
-    if (!title || !author) {
-      Alert.alert("Missing Information", "Please fill in at least the title and author.");
+    if (!title || !author || !municipio) {
+      Alert.alert("Missing Information", "Please fill in all required fields.");
       return;
     }
 
     try {
       console.log("Adding book with user ID:", user.id);
-      console.log("Book data:", { title, author, isbn: isbn || `NO-ISBN-${Date.now()}` });
+      console.log("Book data:", { title, author, isbn: isbn || `NO-ISBN-${Date.now()}`, municipio });
 
-      const response = await api.post(`/books?owner_id=${user.id}`, {
+      const response = await api.post(`/books?owner_id=${user.id}&municipio=${municipio}`, {
         title,
         author,
         isbn: isbn || `NO-ISBN-${Date.now()}`, // Generate a unique identifier if no ISBN
@@ -37,6 +39,7 @@ export default function AddBookScreen() {
       setTitle("");
       setAuthor("");
       setIsbn("");
+      setMunicipio("");
     } catch (error: any) {
       console.error("Error adding book:", error);
       if (error.response) {
@@ -66,6 +69,13 @@ export default function AddBookScreen() {
       <TextInput style={styles.input} value={author} onChangeText={setAuthor} placeholder="Author *" placeholderTextColor="#888" />
 
       <TextInput style={styles.input} value={isbn} onChangeText={setIsbn} placeholder="ISBN (optional)" placeholderTextColor="#888" />
+
+      <Picker selectedValue={municipio} onValueChange={(itemValue: string) => setMunicipio(itemValue)} style={styles.input}>
+        <Picker.Item label="Select Municipality *" value="" />
+        <Picker.Item label="Municipality A" value="Municipality A" />
+        <Picker.Item label="Municipality B" value="Municipality B" />
+        <Picker.Item label="Municipality C" value="Municipality C" />
+      </Picker>
 
       <Button title="Add Book" onPress={addBook} />
     </View>

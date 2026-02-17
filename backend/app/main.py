@@ -88,9 +88,28 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
 # def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
 #     return crud.create_book(db=db, book=book)
 
-@app.get("/books", response_model=list[schemas.Book])
-def list_books(db: Session = Depends(get_db)):
-    return crud.get_books(db=db)
+@app.get("/books", response_model=dict)
+def list_books_grouped_by_municipio(db: Session = Depends(get_db)):
+    books = crud.get_books(db=db)
+    grouped_books = {}
+
+    for book in books:
+        for copy in book.copies:  # Acesse as cópias relacionadas ao livro
+            municipio = copy.location  # Use o campo location da cópia
+            if municipio not in grouped_books:
+                grouped_books[municipio] = []
+            grouped_books[municipio].append({
+                "id": book.id,
+                "title": book.title,
+                "author": book.author,
+                "isbn": book.isbn,
+                "cover_url": book.cover_url,
+                "condition": copy.condition,
+                "status": copy.status,
+                "owner_id": copy.owner_id,
+            })
+
+    return grouped_books
 
 @app.get("/users/{user_id}/books")
 def get_user_books(user_id: int, db: Session = Depends(get_db)):
@@ -154,33 +173,39 @@ def get_books_nearby(lat: float, lon: float, radius_km: int, db: Session = Depen
 def add_book(request: Request, book: schemas.BookCreate, db: Session = Depends(get_db)):
     print("=== ADD BOOK ENDPOINT CALLED ===")
     print(f"Query params: {request.query_params}")
-    
-    # Get owner_id from query parameters
+
+    # Get owner_id and municipality from query parameters
     owner_id = request.query_params.get("owner_id")
+    municipio = request.query_params.get("municipio")
+
     if not owner_id:
         print("ERROR: No owner_id in query parameters")
         raise HTTPException(status_code=400, detail="owner_id is required")
-    
+
+    if not municipio:
+        print("ERROR: No municipio in query parameters")
+        raise HTTPException(status_code=400, detail="municipio is required")
+
     try:
         owner_id = int(owner_id)
-        print(f"Adding book with owner_id: {owner_id}")
+        print(f"Adding book with owner_id: {owner_id} and municipio: {municipio}")
     except ValueError:
         print(f"ERROR: Invalid owner_id: {owner_id}")
         raise HTTPException(status_code=400, detail="owner_id must be an integer")
-    
+
     print(f"Book data: {book.dict()}")
 
     # Create the book
     created_book = crud.create_book(db, book)
     print(f"Book created with ID: {created_book.id}")
 
-    # Create a copy associated with the owner
+    # Create a copy associated with the owner and municipality
     copy_data = schemas.CopyCreate(
         book_id=created_book.id,
         owner_id=owner_id,
         condition="OK",  # BookCondition: OK, USED, WORN
         status="AVAILABLE",  # CopyStatus: AVAILABLE, REQUESTED, BORROWED
-        location="Not specified"  # Default location
+        location=municipio  # Use municipio as location
     )
     print(f"Creating copy with data: {copy_data.dict()}")
     created_copy = crud.create_copy(db, copy_data)

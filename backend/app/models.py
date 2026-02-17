@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, String, Integer, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -57,7 +56,7 @@ class Copy(Base):
 
     book = relationship("Book", back_populates="copies")
     owner = relationship("User", back_populates="copies")
-    requests = relationship("Request", back_populates="copy")
+    requests = relationship("Request", back_populates="copy")  # Added back_populates for requests
 
 class Request(Base):
     __tablename__ = "requests"
@@ -69,7 +68,7 @@ class Request(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    copy = relationship("Copy", back_populates="requests")
+    copy = relationship("Copy", back_populates="requests")  # Ensure back_populates matches Copy
     requester = relationship("User", back_populates="requests")
 
 class Location(Base):

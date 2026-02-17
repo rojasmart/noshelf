@@ -7,7 +7,7 @@ import api from "@/hooks/use-api";
 import { useUser } from "@/hooks/use-user";
 
 export default function ExploreScreen() {
-  const [books, setBooks] = useState([]);
+  const [groupedBooks, setGroupedBooks] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
 
@@ -18,7 +18,7 @@ export default function ExploreScreen() {
   const fetchBooks = async () => {
     try {
       const response = await api.get("/books");
-      setBooks(response.data);
+      setGroupedBooks(response.data);
     } catch (error) {
       console.error("Error fetching books:", error);
     } finally {
@@ -62,17 +62,22 @@ export default function ExploreScreen() {
           <ThemedView style={styles.stepContainer}>
             <ThemedText>Loading books...</ThemedText>
           </ThemedView>
-        ) : books.length > 0 ? (
-          books.map((book: any) => (
-            <ThemedView key={book.id} style={styles.stepContainer}>
-              <ThemedText type="subtitle">{book.title}</ThemedText>
-              <ThemedText>by {book.author}</ThemedText>
-              <ThemedText>ISBN: {book.isbn}</ThemedText>
-              {user && (
-                <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
-                  <ThemedText style={styles.buttonText}>Request Book</ThemedText>
-                </TouchableOpacity>
-              )}
+        ) : Object.keys(groupedBooks).length > 0 ? (
+          Object.entries(groupedBooks).map(([municipio, books]) => (
+            <ThemedView key={municipio} style={styles.stepContainer}>
+              <ThemedText type="subtitle">Municipality: {municipio}</ThemedText>
+              {books.map((book: any) => (
+                <ThemedView key={book.id} style={styles.stepContainer}>
+                  <ThemedText>{book.title}</ThemedText>
+                  <ThemedText>by {book.author}</ThemedText>
+                  <ThemedText>ISBN: {book.isbn}</ThemedText>
+                  {user && (
+                    <TouchableOpacity style={styles.button} onPress={() => requestBook(book.id, book.title)}>
+                      <ThemedText style={styles.buttonText}>Request Book</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </ThemedView>
+              ))}
             </ThemedView>
           ))
         ) : (
