@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function RequestBookScreen() {
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests" or "incoming"
   const { user } = useUser();
 
   useEffect(() => {
     if (user) {
       fetchMyRequests();
+      fetchIncomingRequests();
     } else {
       setLoading(false);
     }
@@ -20,7 +23,7 @@ export default function RequestBookScreen() {
     try {
       const response = await api.get("/requests");
       // Filter requests made by the current user
-      const myRequests = response.data.filter((req) => req.requester_id === user?.id);
+      const myRequests = response.data.filter((req: any) => req.requester_id === user?.id);
       setRequests(myRequests);
     } catch (error) {
       console.error("Error fetching requests:", error);
@@ -29,7 +32,17 @@ export default function RequestBookScreen() {
     }
   };
 
-  const cancelRequest = async (requestId) => {
+  const fetchIncomingRequests = async () => {
+    try {
+      const response = await api.get(`/users/${user?.id}/incoming-requests`);
+      setIncomingRequests(response.data);
+      console.log("Incoming requests:", response.data);
+    } catch (error) {
+      console.error("Error fetching incoming requests:", error);
+    }
+  };
+
+  const cancelRequest = async (requestId: number) => {
     try {
       await api.delete(`/requests/${requestId}`);
       Alert.alert("Success", "Request canceled successfully!");
@@ -59,29 +72,78 @@ export default function RequestBookScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>My Book Requests</Text>
+      <Text style={styles.title}>Book Requests</Text>
 
-      {requests.length > 0 ? (
-        <ScrollView style={styles.scrollView}>
-          {requests.map((request) => (
-            <View key={request.id} style={styles.requestCard}>
-              <Text style={styles.requestStatus}>Status: {request.status || "PENDING"}</Text>
-              <Text style={styles.requestMessage}>{request.message}</Text>
-              <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
+      {/* Tab Navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === "my-requests" && styles.activeTab]} 
+          onPress={() => setActiveTab("my-requests")}
+        >
+          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>
+            My Requests ({requests.length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === "incoming" && styles.activeTab]} 
+          onPress={() => setActiveTab("incoming")}
+        >
+          <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>
+            Incoming ({incomingRequests.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-              {request.status === "PENDING" && (
-                <TouchableOpacity style={styles.cancelButton} onPress={() => cancelRequest(request.id)}>
-                  <Text style={styles.cancelButtonText}>Cancel Request</Text>
-                </TouchableOpacity>
-              )}
+      {/* My Requests Tab */}
+      {activeTab === "my-requests" && (
+        <>
+          {requests.length > 0 ? (
+            <ScrollView style={styles.scrollView}>
+              {requests.map((request: any) => (
+                <View key={request.id} style={styles.requestCard}>
+                  <Text style={styles.requestStatus}>Status: {request.status || "PENDING"}</Text>
+                  <Text style={styles.requestMessage}>{request.message}</Text>
+                  <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
+
+                  {request.status === "PENDING" && (
+                    <TouchableOpacity style={styles.cancelButton} onPress={() => cancelRequest(request.id)}>
+                      <Text style={styles.cancelButtonText}>Cancel Request</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>You haven't requested any books yet.</Text>
+              <Text style={styles.emptySubtext}>Browse available books and make your first request!</Text>
             </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No book requests yet</Text>
-          <Text style={styles.emptySubtext}>Go to Explore to request books from other users!</Text>
-        </View>
+          )}
+        </>
+      )}
+
+      {/* Incoming Requests Tab */}
+      {activeTab === "incoming" && (
+        <>
+          {incomingRequests.length > 0 ? (
+            <ScrollView style={styles.scrollView}>
+              {incomingRequests.map((request: any) => (
+                <View key={request.id} style={styles.requestCard}>
+                  <Text style={styles.bookTitle}>{request.book_title} by {request.book_author}</Text>
+                  <Text style={styles.requesterInfo}>Requested by: {request.requester_name} ({request.requester_email})</Text>
+                  <Text style={styles.requestMessage}>Message: {request.message}</Text>
+                  <Text style={styles.requestStatus}>Status: {request.status}</Text>
+                  <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No incoming requests for your books.</Text>
+              <Text style={styles.emptySubtext}>When someone requests your books, they'll appear here!</Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -172,5 +234,42 @@ const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
     fontStyle: "italic",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+    padding: 5,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  activeTab: {
+    backgroundColor: "#007AFF",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
+  activeTabText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  bookTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  requesterInfo: {
+    fontSize: 16,
+    color: "#007AFF",
+    marginBottom: 8,
   },
 });

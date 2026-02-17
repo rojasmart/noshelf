@@ -107,6 +107,7 @@ def list_books_grouped_by_municipio(db: Session = Depends(get_db)):
                 "condition": copy.condition,
                 "status": copy.status,
                 "owner_id": copy.owner_id,
+                "copy_id": copy.id,  # Added the missing copy_id field
             })
 
     return grouped_books
@@ -157,6 +158,36 @@ def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)
 @app.get("/requests", response_model=list[schemas.Request])
 def list_requests(db: Session = Depends(get_db)):
     return crud.get_requests(db=db)
+
+@app.get("/users/{user_id}/incoming-requests")
+def get_incoming_requests(user_id: int, db: Session = Depends(get_db)):
+    print(f"Fetching incoming requests for user_id: {user_id}")
+    # Get all copies owned by this user
+    user_copies = crud.get_copies_by_owner(db, user_id)
+    copy_ids = [copy.id for copy in user_copies]
+    
+    # Get all requests for these copies
+    incoming_requests = []
+    for copy_id in copy_ids:
+        requests = db.query(models.Request).filter(models.Request.copy_id == copy_id).all()
+        for request in requests:
+            request_data = {
+                "id": request.id,
+                "copy_id": request.copy_id,
+                "requester_id": request.requester_id,
+                "requester_name": request.requester.name,
+                "requester_email": request.requester.email,
+                "message": request.message,
+                "status": request.status,
+                "created_at": request.created_at,
+                "book_title": request.copy.book.title,
+                "book_author": request.copy.book.author,
+                "book_isbn": request.copy.book.isbn,
+            }
+            incoming_requests.append(request_data)
+    
+    print(f"Found {len(incoming_requests)} incoming requests")
+    return incoming_requests
 
 @app.post("/location")
 def save_location(location: schemas.LocationCreate, db: Session = Depends(get_db)):
@@ -215,7 +246,15 @@ def add_book(request: Request, book: schemas.BookCreate, db: Session = Depends(g
 
 @app.post("/requests")
 def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)):
-    return crud.create_request(db, request)
+    print(f"=== CREATE REQUEST ENDPOINT CALLED ===")
+    print(f"Request data: {request.dict()}")
+    try:
+        result = crud.create_request(db, request)
+        print(f"Request created successfully: {result}")
+        return result
+    except Exception as e:
+        print(f"Error creating request: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
 
 # Chat
 @app.post("/messages", response_model=schemas.Message)

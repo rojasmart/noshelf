@@ -47,6 +47,8 @@ export default function ExploreScreen() {
   };
 
   const navigateToMunicipality = (municipality: string) => {
+    console.log("Navigating to municipality:", municipality);
+    console.log("Books for this municipality:", groupedBooks[municipality]);
     router.push({
       pathname: "/municipality",
       params: {

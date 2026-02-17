@@ -10,21 +10,35 @@ export default function MunicipalityScreen() {
   // Parse the books from JSON string
   const booksArray = books ? JSON.parse(books as string) : [];
 
+  console.log("Municipality booksArray:", booksArray);
+
   const requestBook = async (copyId: number, title: string) => {
+    console.log("requestBook called with copyId:", copyId, "title:", title);
     if (!user) {
       Alert.alert("Login Required", "Please register first to request books!");
       return;
     }
 
+    console.log("Requesting book with data:", {
+      copy_id: copyId,
+      requester_id: user.id,
+      message: `I would like to borrow "${title}"`,
+    });
+
     try {
-      await api.post("/requests", {
+      const response = await api.post("/requests", {
         copy_id: copyId,
         requester_id: user.id,
         message: `I would like to borrow "${title}"`,
       });
+      console.log("Request successful:", response.data);
       Alert.alert("Success", "Book request sent successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error requesting book:", error);
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+      }
       Alert.alert("Error", "Failed to send request. Please try again.");
     }
   };
