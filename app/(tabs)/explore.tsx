@@ -1,8 +1,6 @@
-import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
-import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import api from "@/hooks/use-api";
@@ -46,13 +44,11 @@ export default function ExploreScreen() {
       alert("Failed to send request. Please try again.");
     }
   };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={<Image source={require("@/assets/images/noshelf-book.jpg")} style={styles.reactLogo} />}
-    >
+    <ThemedView style={{ flex: 1, marginTop: 30, padding: 16 }}>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore Books</ThemedText>
+        <ThemedText type="title">Available Books</ThemedText>
       </ThemedView>
 
       {!user && (
@@ -83,7 +79,7 @@ export default function ExploreScreen() {
           <ThemedText>No books available yet</ThemedText>
         </ThemedView>
       )}
-    </ParallaxScrollView>
+    </ThemedView>
   );
 }
 
@@ -96,30 +92,6 @@ const styles = StyleSheet.create({
   stepContainer: {
     gap: 8,
     marginBottom: 8,
-  },
-  reactLogo: {
-    height: 278,
-    width: 390,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
-  },
-  backendMessageContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 16,
-  },
-  backendMessageText: {
-    fontSize: 18,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-    width: "100%",
-    color: "#fff",
   },
   button: {
     backgroundColor: "#007AFF",
