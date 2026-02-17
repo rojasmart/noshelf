@@ -283,6 +283,30 @@ def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)
         print(f"Error creating request: {e}")
         raise HTTPException(status_code=422, detail=str(e))
 
+@app.delete("/requests/{request_id}")
+def cancel_request(request_id: int, db: Session = Depends(get_db)):
+    """Cancela um request pendente"""
+    success = crud.delete_request(db, request_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"message": "Request cancelled successfully"}
+
+@app.put("/requests/{request_id}/accept")
+def accept_request(request_id: int, db: Session = Depends(get_db)):
+    """Owner aceita um request - muda status para ACCEPTED e copy para RESERVED"""
+    request = crud.accept_request(db, request_id)
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"message": "Request accepted successfully", "status": request.status}
+
+@app.put("/requests/{request_id}/confirm-delivery")
+def confirm_delivery(request_id: int, db: Session = Depends(get_db)):
+    """Receiver confirma a entrega - muda status para COMPLETED"""
+    request = crud.confirm_delivery(db, request_id)
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"message": "Delivery confirmed successfully", "status": request.status}
+
 # Chat/Messages
 @app.post("/requests/{request_id}/messages")
 def create_message(request_id: int, content: str, sender_id: int, db: Session = Depends(get_db)):

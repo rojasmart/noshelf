@@ -12,11 +12,13 @@ class BookCondition(str, enum.Enum):
 class CopyStatus(str, enum.Enum):
     AVAILABLE = "AVAILABLE"
     REQUESTED = "REQUESTED"
+    RESERVED = "RESERVED"  # Novo status para quando o request é aceito
     BORROWED = "BORROWED"
 
 class RequestStatus(str, enum.Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
+    RESERVED = "RESERVED"  # Novo status para quando o owner aceita
     DELIVERED = "DELIVERED"
     COMPLETED = "COMPLETED"
 

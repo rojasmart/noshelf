@@ -11,6 +11,36 @@ export default function RequestBookScreen() {
   const [activeTab, setActiveTab] = useState("my-requests"); // "my-requests" or "incoming"
   const { user } = useUser();
 
+  const getStatusColor = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "PENDING":
+        return "#FFA500"; // Orange
+      case "ACCEPTED":
+        return "#007AFF"; // Blue
+      case "RESERVED":
+        return "#007AFF"; // Blue
+      case "COMPLETED":
+        return "#28a745"; // Green
+      default:
+        return "#666"; // Gray
+    }
+  };
+
+  const getStatusDisplayText = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "PENDING":
+        return "Pending";
+      case "ACCEPTED":
+        return "Accepted";
+      case "RESERVED":
+        return "Reserved";
+      case "COMPLETED":
+        return "Completed";
+      default:
+        return status;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchMyRequests();
@@ -64,6 +94,29 @@ export default function RequestBookScreen() {
     }
   };
 
+  const acceptRequest = async (requestId: number) => {
+    try {
+      await api.put(`/requests/${requestId}/accept`);
+      Alert.alert("Success", "Request accepted successfully!");
+      fetchIncomingRequests(); // Refresh the list
+    } catch (error) {
+      console.error("Error accepting request:", error);
+      Alert.alert("Error", "Failed to accept request.");
+    }
+  };
+
+  const confirmDelivery = async (requestId: number) => {
+    try {
+      await api.put(`/requests/${requestId}/confirm-delivery`);
+      Alert.alert("Success", "Delivery confirmed successfully!");
+      fetchMyRequests(); // Refresh both lists
+      fetchIncomingRequests();
+    } catch (error) {
+      console.error("Error confirming delivery:", error);
+      Alert.alert("Error", "Failed to confirm delivery.");
+    }
+  };
+
   if (!user) {
     return (
       <View style={styles.container}>
@@ -109,7 +162,9 @@ export default function RequestBookScreen() {
                     Requested from: {request.owner_name} ({request.owner_email})
                   </Text>
                   <Text style={styles.requestMessage}>Message: {request.message}</Text>
-                  <Text style={styles.requestStatus}>Status: {request.status || "PENDING"}</Text>
+                  <Text style={[styles.requestStatus, { color: getStatusColor(request.status || "PENDING") }]}>
+                    Status: {getStatusDisplayText(request.status || "PENDING")}
+                  </Text>
                   <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
 
                   <View style={styles.buttonContainer}>
@@ -120,6 +175,12 @@ export default function RequestBookScreen() {
                     {request.status === "PENDING" && (
                       <TouchableOpacity style={styles.cancelButton} onPress={() => cancelRequest(request.id)}>
                         <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {request.status === "ACCEPTED" && (
+                      <TouchableOpacity style={styles.confirmButton} onPress={() => confirmDelivery(request.id)}>
+                        <Text style={styles.confirmButtonText}>Confirm Delivery</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -149,12 +210,22 @@ export default function RequestBookScreen() {
                     Requested by: {request.requester_name} ({request.requester_email})
                   </Text>
                   <Text style={styles.requestMessage}>Message: {request.message}</Text>
-                  <Text style={styles.requestStatus}>Status: {request.status}</Text>
+                  <Text style={[styles.requestStatus, { color: getStatusColor(request.status) }]}>
+                    Status: {getStatusDisplayText(request.status)}
+                  </Text>
                   <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>
 
-                  <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, true)}>
-                    <Text style={styles.chatButtonText}>Chat</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, true)}>
+                      <Text style={styles.chatButtonText}>Chat</Text>
+                    </TouchableOpacity>
+
+                    {request.status === "PENDING" && (
+                      <TouchableOpacity style={styles.acceptButton} onPress={() => acceptRequest(request.id)}>
+                        <Text style={styles.acceptButtonText}>Accept</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               ))}
             </ScrollView>
@@ -213,7 +284,6 @@ const styles = StyleSheet.create({
   requestStatus: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#007AFF",
     marginBottom: 10,
   },
   requestMessage: {
@@ -308,6 +378,33 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   chatButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  confirmButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  acceptButton: {
+    backgroundColor: "#28a745",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+  },
+  acceptButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",

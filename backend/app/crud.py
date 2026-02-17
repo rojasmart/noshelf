@@ -49,6 +49,18 @@ def get_copies_by_owner(db: Session, owner_id: int):
 
 # Requests
 def create_request(db: Session, request: schemas.RequestCreate):
+    # Verificar se a cópia está disponível
+    db_copy = db.query(models.Copy).filter(models.Copy.id == request.copy_id).first()
+    if not db_copy:
+        raise ValueError("Copy not found")
+    
+    if db_copy.status != models.CopyStatus.AVAILABLE:
+        raise ValueError(f"Book is not available. Current status: {db_copy.status}")
+    
+    # Verificar se o usuário não está tentando requisitar seu próprio livro
+    if db_copy.owner_id == request.requester_id:
+        raise ValueError("Cannot request your own book")
+    
     db_request = models.Request(**request.dict())
     db.add(db_request)
     db.commit()
@@ -57,6 +69,55 @@ def create_request(db: Session, request: schemas.RequestCreate):
 
 def get_requests(db: Session):
     return db.query(models.Request).all()
+
+def get_request(db: Session, request_id: int):
+    return db.query(models.Request).filter(models.Request.id == request_id).first()
+
+def accept_request(db: Session, request_id: int):
+    """Aceita um request (owner aceita) - muda status para ACCEPTED e copy para RESERVED"""
+    db_request = db.query(models.Request).filter(models.Request.id == request_id).first()
+    if not db_request:
+        return None
+    
+    # Atualiza o status do request
+    db_request.status = models.RequestStatus.ACCEPTED
+    
+    # Atualiza o status da cópia para RESERVED
+    db_copy = db.query(models.Copy).filter(models.Copy.id == db_request.copy_id).first()
+    if db_copy:
+        db_copy.status = models.CopyStatus.RESERVED
+    
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+def confirm_delivery(db: Session, request_id: int):
+    """Confirma a entrega (receiver confirma) - muda status para COMPLETED"""
+    db_request = db.query(models.Request).filter(models.Request.id == request_id).first()
+    if not db_request:
+        return None
+    
+    # Atualiza o status do request
+    db_request.status = models.RequestStatus.COMPLETED
+    
+    # Atualiza o status da cópia para BORROWED
+    db_copy = db.query(models.Copy).filter(models.Copy.id == db_request.copy_id).first()
+    if db_copy:
+        db_copy.status = models.CopyStatus.BORROWED
+    
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+def delete_request(db: Session, request_id: int):
+    """Cancela/remove um request"""
+    db_request = db.query(models.Request).filter(models.Request.id == request_id).first()
+    if not db_request:
+        return False
+    
+    db.delete(db_request)
+    db.commit()
+    return True
 
 # Messages
 def create_message(db: Session, message: schemas.MessageCreate):
