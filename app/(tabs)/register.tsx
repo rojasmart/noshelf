@@ -26,10 +26,16 @@ export default function RegisterScreen() {
 
     setBooksLoading(true);
     try {
+      console.log("Fetching books for user ID:", user.id);
       const response = await api.get(`/users/${user.id}/books`);
+      console.log("Books fetched:", response.data);
       setMyBooks(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user books:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      }
     } finally {
       setBooksLoading(false);
     }

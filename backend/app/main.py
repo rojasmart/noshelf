@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query, Request
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from itsdangerous import URLSafeTimedSerializer
 from fastapi import HTTPException
@@ -100,9 +100,9 @@ def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     return existing_user
 
 # Books
-@app.post("/books", response_model=schemas.Book)
-def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
-    return crud.create_book(db=db, book=book)
+# @app.post("/books", response_model=schemas.Book)
+# def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
+#     return crud.create_book(db=db, book=book)
 
 @app.get("/books", response_model=list[schemas.Book])
 def list_books(db: Session = Depends(get_db)):
@@ -110,9 +110,12 @@ def list_books(db: Session = Depends(get_db)):
 
 @app.get("/users/{user_id}/books")
 def get_user_books(user_id: int, db: Session = Depends(get_db)):
+    print(f"Fetching books for user_id: {user_id}")
     copies = crud.get_copies_by_owner(db, user_id)
+    print(f"Found {len(copies)} copies for user {user_id}")
     books = []
     for copy in copies:
+        print(f"Processing copy: book_id={copy.book_id}, owner_id={copy.owner_id}")
         book = crud.get_book(db, copy.book_id)
         if book:
             # Add owner info to the book response
@@ -128,6 +131,10 @@ def get_user_books(user_id: int, db: Session = Depends(get_db)):
                 "status": copy.status
             }
             books.append(book_data)
+            print(f"Added book: {book.title}")
+        else:
+            print(f"Book not found for book_id: {copy.book_id}")
+    print(f"Returning {len(books)} books")
     return books
 
 # Copies
@@ -160,19 +167,41 @@ def get_books_nearby(lat: float, lon: float, radius_km: int, db: Session = Depen
     pass
 
 @app.post("/books")
-def add_book(book: schemas.BookCreate, owner_id: int, db: Session = Depends(get_db)):
+def add_book(request: Request, book: schemas.BookCreate, db: Session = Depends(get_db)):
+    print("=== ADD BOOK ENDPOINT CALLED ===")
+    print(f"Query params: {request.query_params}")
+    
+    # Get owner_id from query parameters
+    owner_id = request.query_params.get("owner_id")
+    if not owner_id:
+        print("ERROR: No owner_id in query parameters")
+        raise HTTPException(status_code=400, detail="owner_id is required")
+    
+    try:
+        owner_id = int(owner_id)
+        print(f"Adding book with owner_id: {owner_id}")
+    except ValueError:
+        print(f"ERROR: Invalid owner_id: {owner_id}")
+        raise HTTPException(status_code=400, detail="owner_id must be an integer")
+    
+    print(f"Book data: {book.dict()}")
+
     # Create the book
     created_book = crud.create_book(db, book)
-    
+    print(f"Book created with ID: {created_book.id}")
+
     # Create a copy associated with the owner
     copy_data = schemas.CopyCreate(
         book_id=created_book.id,
         owner_id=owner_id,
-        condition="OK",
-        status="AVAILABLE"
+        condition="OK",  # BookCondition: OK, USED, WORN
+        status="AVAILABLE",  # CopyStatus: AVAILABLE, REQUESTED, BORROWED
+        location="Not specified"  # Default location
     )
-    crud.create_copy(db, copy_data)
-    
+    print(f"Creating copy with data: {copy_data.dict()}")
+    created_copy = crud.create_copy(db, copy_data)
+    print(f"Copy created with ID: {created_copy.id}")
+
     return created_book
 
 @app.post("/requests")

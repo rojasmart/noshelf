@@ -21,19 +21,28 @@ export default function AddBookScreen() {
     }
 
     try {
-      await api.post(`/books?owner_id=${user.id}`, {
+      console.log("Adding book with user ID:", user.id);
+      console.log("Book data:", { title, author, isbn: isbn || `NO-ISBN-${Date.now()}` });
+
+      const response = await api.post(`/books?owner_id=${user.id}`, {
         title,
         author,
         isbn: isbn || `NO-ISBN-${Date.now()}`, // Generate a unique identifier if no ISBN
       });
+
+      console.log("Book added successfully:", response.data);
       Alert.alert("Success", "Book added successfully!");
 
       // Clear form
       setTitle("");
       setAuthor("");
       setIsbn("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding book:", error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        console.error("Error status:", error.response.status);
+      }
       Alert.alert("Error", "Failed to add book. Please try again.");
     }
   };

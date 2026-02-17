@@ -54,7 +54,7 @@ class Book(BookBase):
         orm_mode = True
 
 class CopyBase(BaseModel):
-    condition: CopyStatus
+    condition: BookCondition  # Should be BookCondition, not CopyStatus
     status: CopyStatus
     location: str
 
