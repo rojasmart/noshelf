@@ -21,10 +21,9 @@ export default function RequestBookScreen() {
 
   const fetchMyRequests = async () => {
     try {
-      const response = await api.get("/requests");
-      // Filter requests made by the current user
-      const myRequests = response.data.filter((req: any) => req.requester_id === user?.id);
-      setRequests(myRequests);
+      const response = await api.get(`/users/${user?.id}/outgoing-requests`);
+      console.log("Outgoing requests for user", user?.id, ":", response.data);
+      setRequests(response.data);
     } catch (error) {
       console.error("Error fetching requests:", error);
     } finally {
@@ -76,21 +75,11 @@ export default function RequestBookScreen() {
 
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === "my-requests" && styles.activeTab]} 
-          onPress={() => setActiveTab("my-requests")}
-        >
-          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>
-            My Requests ({requests.length})
-          </Text>
+        <TouchableOpacity style={[styles.tab, activeTab === "my-requests" && styles.activeTab]} onPress={() => setActiveTab("my-requests")}>
+          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>My Requests ({requests.length})</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === "incoming" && styles.activeTab]} 
-          onPress={() => setActiveTab("incoming")}
-        >
-          <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>
-            Incoming ({incomingRequests.length})
-          </Text>
+        <TouchableOpacity style={[styles.tab, activeTab === "incoming" && styles.activeTab]} onPress={() => setActiveTab("incoming")}>
+          <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>Incoming ({incomingRequests.length})</Text>
         </TouchableOpacity>
       </View>
 
@@ -101,8 +90,14 @@ export default function RequestBookScreen() {
             <ScrollView style={styles.scrollView}>
               {requests.map((request: any) => (
                 <View key={request.id} style={styles.requestCard}>
+                  <Text style={styles.bookTitle}>
+                    {request.book_title} by {request.book_author}
+                  </Text>
+                  <Text style={styles.requesterInfo}>
+                    Requested from: {request.owner_name} ({request.owner_email})
+                  </Text>
+                  <Text style={styles.requestMessage}>Message: {request.message}</Text>
                   <Text style={styles.requestStatus}>Status: {request.status || "PENDING"}</Text>
-                  <Text style={styles.requestMessage}>{request.message}</Text>
                   <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
 
                   {request.status === "PENDING" && (
@@ -129,8 +124,12 @@ export default function RequestBookScreen() {
             <ScrollView style={styles.scrollView}>
               {incomingRequests.map((request: any) => (
                 <View key={request.id} style={styles.requestCard}>
-                  <Text style={styles.bookTitle}>{request.book_title} by {request.book_author}</Text>
-                  <Text style={styles.requesterInfo}>Requested by: {request.requester_name} ({request.requester_email})</Text>
+                  <Text style={styles.bookTitle}>
+                    {request.book_title} by {request.book_author}
+                  </Text>
+                  <Text style={styles.requesterInfo}>
+                    Requested by: {request.requester_name} ({request.requester_email})
+                  </Text>
                   <Text style={styles.requestMessage}>Message: {request.message}</Text>
                   <Text style={styles.requestStatus}>Status: {request.status}</Text>
                   <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>

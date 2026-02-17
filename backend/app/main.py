@@ -189,6 +189,33 @@ def get_incoming_requests(user_id: int, db: Session = Depends(get_db)):
     print(f"Found {len(incoming_requests)} incoming requests")
     return incoming_requests
 
+@app.get("/users/{user_id}/outgoing-requests")
+def get_outgoing_requests(user_id: int, db: Session = Depends(get_db)):
+    print(f"Fetching outgoing requests for user_id: {user_id}")
+    # Get all requests made by this user
+    requests = db.query(models.Request).filter(models.Request.requester_id == user_id).all()
+    
+    outgoing_requests = []
+    for request in requests:
+        request_data = {
+            "id": request.id,
+            "copy_id": request.copy_id,
+            "requester_id": request.requester_id,
+            "message": request.message,
+            "status": request.status,
+            "created_at": request.created_at,
+            "updated_at": request.updated_at,
+            "book_title": request.copy.book.title,
+            "book_author": request.copy.book.author,
+            "book_isbn": request.copy.book.isbn,
+            "owner_name": request.copy.owner.name,
+            "owner_email": request.copy.owner.email,
+        }
+        outgoing_requests.append(request_data)
+    
+    print(f"Found {len(outgoing_requests)} outgoing requests")
+    return outgoing_requests
+
 @app.post("/location")
 def save_location(location: schemas.LocationCreate, db: Session = Depends(get_db)):
     return crud.save_location(db, location)
