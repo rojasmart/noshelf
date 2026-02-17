@@ -3,6 +3,7 @@ import { useUser } from "@/hooks/use-user";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 export default function RequestBookScreen() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -210,16 +211,20 @@ export default function RequestBookScreen() {
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity style={[styles.tab, activeTab === "my-requests" && styles.activeTab]} onPress={() => setActiveTab("my-requests")}>
-          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>Requests ({requests.length})</Text>
+          <Ionicons name="paper-plane-outline" size={20} color={activeTab === "my-requests" ? "#fff" : "#666"} style={{ marginBottom: 2 }} />
+          <Text style={[styles.tabText, activeTab === "my-requests" && styles.activeTabText]}>({requests.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === "incoming" && styles.activeTab]} onPress={() => setActiveTab("incoming")}>
-          <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>Incoming ({incomingRequests.length})</Text>
+          <Ionicons name="mail-open-outline" size={20} color={activeTab === "incoming" ? "#fff" : "#666"} style={{ marginBottom: 2 }} />
+          <Text style={[styles.tabText, activeTab === "incoming" && styles.activeTabText]}>({incomingRequests.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === "my-library" && styles.activeTab]} onPress={() => setActiveTab("my-library")}>
-          <Text style={[styles.tabText, activeTab === "my-library" && styles.activeTabText]}>Library ({myBooks.length})</Text>
+          <Ionicons name="library-outline" size={20} color={activeTab === "my-library" ? "#fff" : "#666"} style={{ marginBottom: 2 }} />
+          <Text style={[styles.tabText, activeTab === "my-library" && styles.activeTabText]}>({myBooks.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === "transfer-history" && styles.activeTab]} onPress={() => setActiveTab("transfer-history")}>
-          <Text style={[styles.tabText, activeTab === "transfer-history" && styles.activeTabText]}>Transferred ({getTransferredBooks().length})</Text>
+          <Ionicons name="swap-horizontal-outline" size={20} color={activeTab === "transfer-history" ? "#fff" : "#666"} style={{ marginBottom: 2 }} />
+          <Text style={[styles.tabText, activeTab === "transfer-history" && styles.activeTabText]}>({getTransferredBooks().length})</Text>
         </TouchableOpacity>
       </View>
 
