@@ -283,12 +283,29 @@ def create_request(request: schemas.RequestCreate, db: Session = Depends(get_db)
         print(f"Error creating request: {e}")
         raise HTTPException(status_code=422, detail=str(e))
 
-# Chat
-@app.post("/messages", response_model=schemas.Message)
-def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db)):
-    return crud.create_message(db=db, message=message)
+# Chat/Messages
+@app.post("/requests/{request_id}/messages")
+def create_message(request_id: int, content: str, sender_id: int, db: Session = Depends(get_db)):
+    message_data = schemas.MessageCreate(
+        request_id=request_id,
+        sender_id=sender_id,
+        content=content
+    )
+    return crud.create_message(db, message_data)
 
-
-@app.get("/messages/{copy_id}", response_model=list[schemas.Message])
-def get_messages(copy_id: int, db: Session = Depends(get_db)):
-    return crud.get_messages_for_copy(db=db, copy_id=copy_id)
+@app.get("/requests/{request_id}/messages")
+def get_messages(request_id: int, db: Session = Depends(get_db)):
+    messages = crud.get_messages_by_request(db, request_id)
+    # Add sender name to each message
+    messages_with_sender = []
+    for message in messages:
+        message_dict = {
+            "id": message.id,
+            "request_id": message.request_id,
+            "sender_id": message.sender_id,
+            "content": message.content,
+            "created_at": message.created_at,
+            "sender_name": message.sender.name
+        }
+        messages_with_sender.append(message_dict)
+    return messages_with_sender

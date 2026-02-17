@@ -1,5 +1,6 @@
 import api from "@/hooks/use-api";
 import { useUser } from "@/hooks/use-user";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -39,6 +40,17 @@ export default function RequestBookScreen() {
     } catch (error) {
       console.error("Error fetching incoming requests:", error);
     }
+  };
+
+  const openChat = (requestId: number, isOwner: boolean) => {
+    router.push({
+      pathname: "/request-chat" as any,
+      params: {
+        requestId: requestId.toString(),
+        userId: user?.id.toString(),
+        isOwner: isOwner.toString(),
+      },
+    });
   };
 
   const cancelRequest = async (requestId: number) => {
@@ -100,11 +112,17 @@ export default function RequestBookScreen() {
                   <Text style={styles.requestStatus}>Status: {request.status || "PENDING"}</Text>
                   <Text style={styles.requestDate}>Requested: {new Date(request.created_at).toLocaleDateString()}</Text>
 
-                  {request.status === "PENDING" && (
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => cancelRequest(request.id)}>
-                      <Text style={styles.cancelButtonText}>Cancel Request</Text>
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, false)}>
+                      <Text style={styles.chatButtonText}>Chat</Text>
                     </TouchableOpacity>
-                  )}
+
+                    {request.status === "PENDING" && (
+                      <TouchableOpacity style={styles.cancelButton} onPress={() => cancelRequest(request.id)}>
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               ))}
             </ScrollView>
@@ -133,6 +151,10 @@ export default function RequestBookScreen() {
                   <Text style={styles.requestMessage}>Message: {request.message}</Text>
                   <Text style={styles.requestStatus}>Status: {request.status}</Text>
                   <Text style={styles.requestDate}>Date: {new Date(request.created_at).toLocaleDateString()}</Text>
+
+                  <TouchableOpacity style={styles.chatButton} onPress={() => openChat(request.id, true)}>
+                    <Text style={styles.chatButtonText}>Chat</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
             </ScrollView>
@@ -209,12 +231,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    alignSelf: "flex-start",
+    flex: 1,
   },
   cancelButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
   emptyState: {
     flex: 1,
@@ -270,5 +293,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007AFF",
     marginBottom: 8,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  chatButton: {
+    backgroundColor: "#28a745",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+  },
+  chatButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

@@ -70,6 +70,18 @@ class Request(Base):
 
     copy = relationship("Copy", back_populates="requests")  # Ensure back_populates matches Copy
     requester = relationship("User", back_populates="requests")
+    messages = relationship("Message", back_populates="request")
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    request_id = Column(Integer, ForeignKey("requests.id"))
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    request = relationship("Request", back_populates="messages")
+    sender = relationship("User")
 
 class Location(Base):
     __tablename__ = "locations"

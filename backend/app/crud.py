@@ -57,3 +57,17 @@ def create_request(db: Session, request: schemas.RequestCreate):
 
 def get_requests(db: Session):
     return db.query(models.Request).all()
+
+# Messages
+def create_message(db: Session, message: schemas.MessageCreate):
+    db_message = models.Message(**message.dict())
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message
+
+def get_messages_by_request(db: Session, request_id: int):
+    return db.query(models.Message).filter(models.Message.request_id == request_id).order_by(models.Message.created_at.asc()).all()
+
+def get_message(db: Session, message_id: int):
+    return db.query(models.Message).filter(models.Message.id == message_id).first()

@@ -91,17 +91,18 @@ class LocationCreate(BaseModel):
     radius_km: int
 
 class MessageBase(BaseModel):
-    sender_id: int
-    receiver_id: int
-    copy_id: int
     content: str
 
 class MessageCreate(MessageBase):
-    pass
+    request_id: int
+    sender_id: int
 
 class Message(MessageBase):
     id: int
+    request_id: int
+    sender_id: int
     created_at: datetime
+    sender_name: Optional[str] = None
 
     class Config:
         from_attributes = True  # Atualizado para Pydantic v2
